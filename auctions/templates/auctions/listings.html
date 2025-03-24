@@ -1,0 +1,87 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <div>
+        <div class="container-fluid">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <h4 class="card-title">{{ item.title }}</h4>
+                        <!-- Listing Image -->
+                        {% if item.image_url %}
+                        <a href="{{ item.image_url }}" target="_blank" class='col-md-4 col-lg-4 mb-4'>
+                            <img src="{{ item.image_url }}" class="card-img-top" alt="Listing Image">
+                        </a>
+                        {% endif %}
+                        <div class="card-body">
+     
+                            <h2 class="text-primary fw-bold">Highest Bid: ${{ currentbid }}</h2>
+
+                            <p class="card-text text-muted">{{ item.description }}</p>
+
+                            
+                            <p class="small text-secondary">Created on: {{ item.create_at }}</p>
+                        </div>
+                        {% if error %}
+                            <div class="alert alert-warning">{{ error }}</div>
+                        {% endif %}
+                        {%if you_bid %}
+                            <div >{{ you_bid }}</div>
+                        {% endif %}
+                        {% if form %}
+                            <form action="{% url 'biding' item.id %}" method="POST">
+                                {% csrf_token %}
+                        
+                                <div class="form-group">
+                                    {{ form.starting_bid }}  
+                                </div>
+                        
+                                <button type="submit" class="btn btn-primary">Place Bid</button>
+                            </form>
+                        {% elif close %}
+                            <div class="alert alert-dark text-center" role="alert">
+                                Auction Closed
+                            </div>
+                        {% else %}
+                            <a href="{% url 'biding' item.id %}">
+                                <h4 class="btn btn-primary">Bid</h4>
+                            </a>
+                        {% endif %}
+                        {% if closeform %}
+                            <form action="{% url 'listings' item.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">close auctions</button>
+                            </form>
+                        {% endif %}
+                        <h5 class="mt-4">💬 Comments</h5>
+                        {% if user.is_authenticated %}
+                        <form method="POST">
+                            {% csrf_token %}
+                            {{ comment_form.as_p }}
+                            <button type="submit" name="submit_comment" class="btn btn-secondary mt-2">Post Comment</button>
+                        </form>
+                        {% else %}
+                        <p><a href="{% url 'login' %}">Log in</a> to post a comment.</p>
+                        {% endif %}
+                        {% if item.comments.all %}
+                            {% for comment in item.comments.all %}
+                                <div class="border rounded p-2 mb-2">
+                                    <strong>{{ comment.user.username }}</strong> said:<br>
+                                    {{ comment.content }}<br>
+                                    <small class="text-muted">{{ comment.timestamp }}</small>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No comments yet.</p>
+                        {% endif %}
+                        <div>
+                            <h2>Detail</h2>
+                            <ul>
+                                <li>listed by {{ username }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>           
+        </div>
+    </div>
+    
+{% endblock %}
