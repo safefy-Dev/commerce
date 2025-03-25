@@ -482,7 +482,10 @@ def biddings(request, id):
     })
 
 def category_filter(request, category_name):
-    listings = Listings.objects.filter(category=category_name, status="ongoing")
+    if category_name=="all":
+        listings = Listings.objects.filter(status="ongoing")
+    else:
+        listings = Listings.objects.filter(category=category_name, status="ongoing")
     return render(request, "auctions/category_listings.html", {
         "category": category_name,
         "listings": listings

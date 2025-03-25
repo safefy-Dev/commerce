@@ -37,6 +37,7 @@
                     <li><a class="dropdown-item" href="{% url 'category_filter' 'Electronics' %}">Electronics</a></li>
                     <li><a class="dropdown-item" href="{% url 'category_filter' 'Home' %}">Home</a></li>
                     <li><a class="dropdown-item" href="{% url 'category_filter' 'Other' %}">Other</a></li>
+                    <li><a class="dropdown-item" href="{% url 'category_filter' 'all' %}">all</a></li>
                 </ul>
             </li>
             {% if user.is_authenticated %}

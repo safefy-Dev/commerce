@@ -6,6 +6,7 @@ CATEGORY_CHOICES = [
     ("Electronics", "Electronics"),
     ("Home", "Home"),
     ("Other", "Other"),
+    ("all","all")
 ]
 
 class User(AbstractUser):

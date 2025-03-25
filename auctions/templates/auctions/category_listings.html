@@ -1,17 +1,60 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-<h2>Listings in "{{ category }}"</h2>
+<h2 class="text-center my-4">Active Listings</h2>
+    <div class="container">
+        <div class="row">
+            {% for listing in listings %}
+                {% if listing.status == "ongoing" %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card shadow-sm border-0">
+                            <!-- Listing Image -->
+                            {% if listing.image_url %}
+                            <a href="{{ listing.image_url }}" target="_blank">
+                                <img src="{{ listing.image_url }}" class="card-img-top" alt="Listing Image">
+                            </a>
+                            {% endif %}
+                            <div class="card-body">
+                                <a href="{% url 'listings' listing.id %}">
+                                    <h4 class="card-title">{{ listing.title }}</h4>
+                                </a>
+                                
 
-{% for listing in listings %}
-  <div class="card mb-3">
-    <div class="card-body">
-      <h5>{{ listing.title }}</h5>
-      <p>{{ listing.description }}</p>
-      <p>Starting Bid: ${{ listing.starting_bid }}</p>
-      <a href="{% url 'listings' listing.id %}" class="btn btn-primary">View Listing</a>
-    </div>
-  </div>
+                            
+                                <!-- <p class="text-primary fw-bold">Price: ${{ listing.starting_bid }}</p> -->
+                                {% for bid in highest_bids %}
+                                    {% if bid.item == listing.id %}
+                                        <p class="text-primary fw-bold">Highest Bid: ${{ bid.max_bid }}</p>
+                                        {% with found_bid=True %}
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                
+                                    <p class="text-primary fw-bold">starting_bid: ${{ listing.starting_bid }}</p>
+                                
+
+                                <p class="card-text text-muted">{{ listing.description }}</p>
+
+                                
+                                <p class="small text-secondary">Created on: {{ listing.create_at }}</p>
+                                <p class="small text-secondary">
+                                    Category: 
+                                    <a href="{% url 'category_filter' listing.category %}">
+                                        {{ listing.category }}
+                                    </a>
+                                </p>
+                                
+                                
+                                <form action="{% url 'add_to_watchlist' listing.id %}" method="POST">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">Add to Watchlist</button>
+                                </form>
+                                
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
 {% empty %}
   <p>No active listings in this category.</p>
 {% endfor %}
