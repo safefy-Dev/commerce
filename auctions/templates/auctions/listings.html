@@ -49,7 +49,7 @@
                         {% if closeform %}
                             <form action="{% url 'listings' item.id %}" method="POST">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-primary">close auctions</button>
+                                <button type="submit" name="close" class="btn btn-primary">close auctions</button>
                             </form>
                         {% endif %}
                         <h5 class="mt-4">💬 Comments</h5>
@@ -59,8 +59,6 @@
                             {{ comment_form.as_p }}
                             <button type="submit" name="submit_comment" class="btn btn-secondary mt-2">Post Comment</button>
                         </form>
-                        {% else %}
-                        <p><a href="{% url 'login' %}">Log in</a> to post a comment.</p>
                         {% endif %}
                         {% if item.comments.all %}
                             {% for comment in item.comments.all %}

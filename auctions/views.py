@@ -82,52 +82,107 @@ def active_list(request):
         "highest_bids": highest_bids  # Pass highest bids for each listing
     })
 
-def listings(request,id):
-    item = get_object_or_404(Listings, id=id) 
-    item_user=get_object_or_404(User,username=item.user.username)
-    usernamep=item_user.username
-    highest_bid = Bidding.objects.filter(item=item).aggregate(Max('new_bidding'))['new_bidding__max'] or item.starting_bid
-    currentbid=highest_bid
+# def listings(request,id):
+#     item = get_object_or_404(Listings, id=id) 
+#     item_user=get_object_or_404(User,username=item.user.username)
+#     usernamep=item_user.username
+#     highest_bid = Bidding.objects.filter(item=item).aggregate(Max('new_bidding'))['new_bidding__max'] or item.starting_bid
+#     currentbid=highest_bid
 
-    
-    you_bid=None
-    if request.user==item.user and item.status=="ongoing":
-        if request.method == 'POST':
-            closeform = close_form(request.POST)
-            if closeform.is_valid():
-                item.status="close"
-                item.save()
-                messages.success(request, "Closed auction!")
-            else:
-                messages.warning(request, "Auction already Closed")
-        else:
-            closeform = close_form()
+#     comment_form = CommentForm()
+#     you_bid=None
+#     if request.user==item.user and item.status=="ongoing":
+#         if request.method == 'POST':
+#             closeform = close_form(request.POST)
+#             if closeform.is_valid():
+#                 item.status="close"
+#                 item.save()
+#                 messages.success(request, "Closed auction!")
+#             else:
+#                 messages.warning(request, "Auction already Closed")
+#         else:
+#             closeform = close_form()
             
-        return render(request, "auctions/listings.html", {
-            "item": item,
-            'username':usernamep,
-            'currentbid':currentbid,
-            'you_bid':you_bid,
-            "closeform":closeform
-        })
-    elif item.status=="close":
-        return render(request, "auctions/listings.html", {
-            "item": item,
-            'username':usernamep,
-            'currentbid':currentbid,
-            'you_bid':you_bid,
-            "close":"closed"
+#         return render(request, "auctions/listings.html", {
+#             "item": item,
+#             'username':usernamep,
+#             'currentbid':currentbid,
+#             'you_bid':you_bid,
+#             "closeform":closeform
+#         })
+#     elif 'submit_comment' in request.POST:
+#             comment_form = CommentForm(request.POST)
+#             if comment_form.is_valid():
+#                 comment = comment_form.save(commit=False)
+#                 comment.user = request.user
+#                 comment.listing = item
+#                 comment.save()
+#                 return redirect("listings", id=id)
+            
+#     elif item.status=="close":
+#         return render(request, "auctions/listings.html", {
+#             "item": item,
+#             'username':usernamep,
+#             'currentbid':currentbid,
+#             'you_bid':you_bid,
+#             "close":"closed"
 
-        })
+#         })
     
-    else:
-        return render(request, "auctions/listings.html", {
-            "item": item,
-            'username':usernamep,
-            'currentbid':currentbid,
-            'you_bid':you_bid,
-        })
+#     else:
+#         return render(request, "auctions/listings.html", {
+#             "item": item,
+#             'username':usernamep,
+#             'currentbid':currentbid,
+#             'you_bid':you_bid,
+#         })
 
+def listings(request, id):
+    item = get_object_or_404(Listings, id=id)
+    item_user = item.user  # Directly use item.user
+    usernamep = item_user.username
+
+    # Get the highest bid or default to starting bid
+    highest_bid = Bidding.objects.filter(item=item).aggregate(Max('new_bidding'))['new_bidding__max'] or item.starting_bid
+    currentbid = highest_bid
+
+    # Track if the user has bid before
+    you_bid = Bidding.objects.filter(item=item, user=request.user).exists() if request.user.is_authenticated else None
+
+    # Forms
+    comment_form = CommentForm()
+    closeform = close_form()
+
+    # Handle closing the auction (if the owner submits)
+    if request.user == item.user and item.status == "ongoing" and request.method == 'POST' and 'close_auction' in request.POST:
+        closeform = close_form(request.POST)
+        if closeform.is_valid():
+            item.status = "close"
+            item.save()
+            messages.success(request, "Closed auction!")
+            return redirect("listings", id=id)
+    
+    # Handle comment submission
+    if request.user.is_authenticated and 'submit_comment' in request.POST:
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.user = request.user
+            comment.listing = item
+            comment.save()
+            return redirect("listings", id=id)
+
+    # Render the correct template based on auction status
+    context = {
+        "item": item,
+        "username": usernamep,
+        "currentbid": currentbid,
+        "you_bid": you_bid,
+        "comment_form": comment_form,
+        "closeform": closeform,
+        "close": "closed" if item.status == "close" else None
+    }
+    return render(request, "auctions/listings.html", context)
 
 def create_listings(request):
     if not request.user.is_authenticated:  # ✅ Check if user is logged in
@@ -288,7 +343,7 @@ def remove_from_watchlist(request, item_id):
 
 def closed_listings(request):
     listings = Listings.objects.filter(status="close")
-    highest_bids = Bidding.objects.filter(item__in=listings).values('item').annotate(max_bid=Max('new_bidding'))    
+    highest_bids = Bidding.objects.filter(item__in=listings).values('item').annotate(max_bid=Max('new_bidding'))     
     return render(request, "auctions/closed_listings.html", {
         "listings": listings,
         "highest_bids": highest_bids
@@ -432,3 +487,6 @@ def category_filter(request, category_name):
         "category": category_name,
         "listings": listings
     })
+
+
+
